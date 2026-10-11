@@ -26,7 +26,14 @@ namespace Jellyfin.Plugin.FileTransformation.Infrastructure
 
         private Regex GetOrCreateRegex(string pattern)
         {
-            return m_regexCache.GetOrAdd(pattern, p => new Regex(p, RegexOptions.Compiled, s_regexTimeout));
+            // Anchored: a pattern names a whole path. Unanchored, 'index.html' (its dot matching any
+            // character) also caught every 'something-index-html.<hash>.chunk.js'.
+            return m_regexCache.GetOrAdd(pattern, p => new Regex($"^(?:{p})$", RegexOptions.Compiled, s_regexTimeout));
+        }
+
+        public IReadOnlyCollection<string> GetRegisteredPaths()
+        {
+            return m_fileTransformations.Keys.ToList();
         }
 
         public bool NeedsTransformation(string path)
